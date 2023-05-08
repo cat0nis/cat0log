@@ -9,9 +9,6 @@ Prompt:
 
 ![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/a1a1c2ca-5e74-4178-ad61-3330b04b712b/Untitled.png)
 
-The file given:
-
-[tutorial.osr](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/42191d52-3868-4e46-884f-185dd9eaab1e/tutorial.osr)
 
 This .osr file is a Replay for the Rhythm game OSU! 
 

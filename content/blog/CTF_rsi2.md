@@ -10,11 +10,7 @@ Prompt:
 
 ![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/757a6b1e-5b7e-4412-be2a-5a6d213c337f/Untitled.png)
 
-File:
-
-[big_b.osr](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/04759051-70bc-4b97-a170-245091526779/big_b.osr)
-
-Information on  .osr file: 
+Information on .osr file: 
 
 [.osr (file format)](https://osu.ppy.sh/wiki/en/Client/File_formats/Osr_%28file_format%29)
 
@@ -39,7 +35,7 @@ we can easily see the player name, striker4250, so we grab the hash that comes d
 
 The Osu! API key can be requested at [https://osu.ppy.sh/p/ap](https://osu.ppy.sh/p/api)i
 
-By inserting this into the url we get from the reddit post, `[https://osu.ppy.sh/api/get_beatmaps?k=your_api_key&h=beatmap_hash](https://osu.ppy.sh/api/get_beatmaps?k=your_api_key&h=beatmap_hash)` , we get this JSON result back:
+By inserting this into the url we get from the reddit post, `https://osu.ppy.sh/api/get_beatmaps?k=your_api_key&h=beatmap_hash` , we get this JSON result back:
 
 ```json
 [{
@@ -90,7 +86,7 @@ By inserting this into the url we get from the reddit post, `[https://osu.ppy.sh
 
 From this we grab the beatmapset_id and insert it in `[https://osu.ppy.sh/s/beatmapset_id](https://osu.ppy.sh/s/beatmapset_id)` , which leads us to
 
-[https://osu.ppy.sh/beatmapsets/41823#osu/131891](https://osu.ppy.sh/beatmapsets/41823#osu/131891)
+`https://osu.ppy.sh/beatmapsets/41823#osu/131891`
 
  After downloading the beatmap and importing it into osu! we can finally watch the replay, where we can see the flag!
 
