@@ -1,5 +1,5 @@
 +++
-title = "Le Inrys Bloggy"
+title = "Inry's Den"
 template = "home.html"
 
 +++
