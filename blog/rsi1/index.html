@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title></title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/style.css">
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/green.css">
+
+        <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/background_dark.css">
+    
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/font-hack-subset.css">
+
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="https://cat0nis.github.io/cat0log/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Cat-0
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        <nav class="menu">
+            <ul class="menu__inner">
+                <li><a href="https://cat0nis.github.io/cat0log//blog">blog</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//tags">tags</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//archive">archive</a></li>
+            
+                <li><a href="https://www.github.com/cat0nis" target="_blank" rel="noopener noreferrer">github</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://cat0nis.github.io/cat0log/blog/rsi1/">CTF Writeup - RSI 1</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2019-11-27
+        </span>
+
+    </div>
+
+    
+
+        
+        <div class="post-content">
+            <p>=== WIP ===
+Prompt:</p>
+<p><img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/a1a1c2ca-5e74-4178-ad61-3330b04b712b/Untitled.png" alt="Untitled" /></p>
+<p>This .osr file is a Replay for the Rhythm game OSU! </p>
+<p>More information about .osr: </p>
+<p><a href="https://osu.ppy.sh/wiki/en/Client/File_formats/Osr_%28file_format%29">https://osu.ppy.sh/wiki/en/Client/File_formats/Osr_(file_format)</a></p>
+<p>For this challenge, the most relevant part is</p>
+<blockquote>
+<p>The remaining data contains information about mouse movement and key presses in an <a href="https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm">LZMA</a>
+stream.</p>
+</blockquote>
+<p>This LZMA stream can be quickly found via <strong>binwalk</strong>.</p>
+<p><img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/0f767f33-e75b-4076-8abe-5224c0765bb2/Untitled.png" alt="Untitled" /></p>
+<p>after extracting with </p>
+<pre data-lang="bash" style="background-color:#151515;color:#e8e8d3;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#ffb964;">binwalk -e</span><span> tutorial.osr
+</span></code></pre>
+<p>we end up with </p>
+<p><img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/87d55d69-2e98-4239-8117-4da9f5bd2e5f/Untitled.png" alt="Untitled" /></p>
+<p>and inside 7F we can find the flag:</p>
+<p><img src="https://s3-us-west-2.amazonaws.com/secure.notion-static.com/a55f3c07-f41d-4cd4-be68-2b6f4304a6cc/Untitled.png" alt="Untitled" /></p>
+<pre data-lang="bash" style="background-color:#151515;color:#e8e8d3;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#ffb964;">UMDCTF{wE1c0m3_t0_o5u!</span><span>}
+</span></code></pre>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Pssst, there&#x27;s more stuff!</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://cat0nis.github.io/cat0log/blog/rsi2/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">CTF Writeup - RSI 2</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://cat0nis.github.io/cat0log/blog/pumpkin/">
+                            <span class="button__text">CTF Writeup - Pumpkin Stand</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2025
+ Powered by <a href="https://www.getzola.org/">Zola</a></span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>

