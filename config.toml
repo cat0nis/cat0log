@@ -1,5 +1,5 @@
 # The URL the site will be built for
-base_url = "https://inryatt.github.io/inrylog/"
+base_url = "https://cat0nis.github.io/cat0log/"
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
